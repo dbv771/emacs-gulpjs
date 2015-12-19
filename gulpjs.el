@@ -146,8 +146,10 @@ TASK is a string specifying the task to start."
 (defun gulpjs-restart-task ()
   "Restart the gulp task run in the current buffer."
   (interactive)
-  (with-current-buffer (gulpjs-open-buffer)
-    (gulpjs-create-process-for-task gulpjs-directory gulpjs-task)))
+  (let ((buffer (gulpjs-open-buffer)))
+    (with-current-buffer buffer
+      (gulpjs-create-process-for-task gulpjs-directory gulpjs-task))
+    (switch-to-buffer-other-window buffer)))
 
 ;;;;;;;
 ;; Mode
