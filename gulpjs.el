@@ -125,14 +125,16 @@ EVENT is the proces' status change."
     (error "Cannot find gulp file")
     (kill-buffer)))
 
-(defun gulpjs-list-all-gulp-tasks ()
+(defun gulpjs-list-all-gulp-tasks (directory-name)
   (interactive)
   "List all the gulp taks in simple format."
-  (split-string
-   (shell-command-to-string
-    "gulp --tasks-simple")
-   "\n"
-   t))
+  (progn (setq tasks (split-string
+                      (shell-command-to-string
+                       "gulp --tasks-simple")
+                      "\n"
+                      t))
+         (setq default-directory directory-name)
+         tasks))
 
 
 (defun gulpjs-restart-task ()
@@ -149,14 +151,13 @@ EVENT is the proces' status change."
 
 TASK is a string specifying the task to start."
   (interactive)
-  (setq old-default-directory default-directory)
+  (setq old-default-directory (file-name-directory (buffer-file-name)))
   (gulpjs-change-default-directory file-name)
-  (let ((task (ido-completing-read "Enter a gulp task : " (gulpjs-list-all-gulp-tasks)))
+  (let ((task (ido-completing-read "Enter a gulp task : " (gulpjs-list-all-gulp-tasks old-default-directory)))
         (buffer (gulpjs-open-buffer)))
     (with-current-buffer buffer
       (gulpjs-create-process-for-task file-name task))
-    (switch-to-buffer-other-window buffer))
-  (setq default-directory old-default-directory))
+    (switch-to-buffer-other-window buffer)))
 
 ;;;###autoload
 (defun gulpjs-start-task ()
