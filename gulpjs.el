@@ -107,12 +107,15 @@ EVENT is the proces' status change."
     (message (propertize "Gulp process stopped unexpectedly" 'face 'error))
     (switch-to-buffer-other-window (gulpjs-open-buffer))))
 
-(defun gulpjs-create-process-for-task (file-name task)
-  "Launch the gulp process in FILE-NAME for TASK."
+(defun gulpjs-change-default-directory (file-name)
   (setq default-directory (gulpjs-get-root (if (file-directory-p file-name)
                                                file-name
-                                             (file-name-directory file-name)))
-        gulpjs-task task
+                                             (file-name-directory file-name)))))
+
+(defun gulpjs-create-process-for-task (file-name task)
+  "Launch the gulp process in FILE-NAME for TASK."
+  (gulpjs-change-default-directory file-name)
+  (setq gulpjs-task task
         gulpjs-directory default-directory)
   (if default-directory
       (let ((process (start-process "gulpjs" (current-buffer) gulpjs-executable task)))
@@ -123,6 +126,7 @@ EVENT is the proces' status change."
     (kill-buffer)))
 
 (defun gulpjs-list-all-gulp-tasks ()
+  (interactive)
   "List all the gulp taks in simple format."
   (split-string
    (shell-command-to-string
@@ -130,18 +134,6 @@ EVENT is the proces' status change."
    "\n"
    t))
 
-;;;###autoload
-(defun gulpjs-start-task ()
-  "Start a gulp task in a specified buffer.
-
-TASK is a string specifying the task to start."
-  (interactive)
-  (let ((task (ido-completing-read "Enter a gulp task : " (gulpjs-list-all-gulp-tasks)))
-        (file-name (buffer-file-name))
-        (buffer (gulpjs-open-buffer)))
-    (with-current-buffer buffer
-      (gulpjs-create-process-for-task file-name task))
-    (switch-to-buffer-other-window buffer)))
 
 (defun gulpjs-restart-task ()
   "Restart the gulp task run in the current buffer."
@@ -151,6 +143,27 @@ TASK is a string specifying the task to start."
       (gulpjs-create-process-for-task gulpjs-directory gulpjs-task))
     (switch-to-buffer-other-window buffer)))
 
+;;;###autoload
+(defun gulpjs-start-task-with-file-name (file-name)
+  "Start a gulp task in a specified buffer.
+
+TASK is a string specifying the task to start."
+  (interactive)
+  (gulpjs-change-default-directory file-name)
+  (let ((task (ido-completing-read "Enter a gulp task : " (gulpjs-list-all-gulp-tasks)))
+        (buffer (gulpjs-open-buffer)))
+    (with-current-buffer buffer
+      (gulpjs-create-process-for-task file-name task))
+    (setq default-directory "")
+    (switch-to-buffer-other-window buffer)))
+
+;;;###autoload
+(defun gulpjs-start-task ()
+  "Start a gulp task in a specified buffer.
+
+TASK is a string specifying the task to start."
+  (interactive)
+  (gulpjs-start-task-with-file-name (buffer-file-name)))
 ;;;;;;;
 ;; Mode
 ;;;;;;;
