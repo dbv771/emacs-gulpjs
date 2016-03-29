@@ -149,13 +149,14 @@ EVENT is the proces' status change."
 
 TASK is a string specifying the task to start."
   (interactive)
+  (setq old-default-directory default-directory)
   (gulpjs-change-default-directory file-name)
   (let ((task (ido-completing-read "Enter a gulp task : " (gulpjs-list-all-gulp-tasks)))
         (buffer (gulpjs-open-buffer)))
     (with-current-buffer buffer
       (gulpjs-create-process-for-task file-name task))
-    (setq default-directory "")
-    (switch-to-buffer-other-window buffer)))
+    (switch-to-buffer-other-window buffer))
+  (setq default-directory old-default-directory))
 
 ;;;###autoload
 (defun gulpjs-start-task ()
